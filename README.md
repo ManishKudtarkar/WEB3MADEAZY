@@ -1,8 +1,12 @@
-# ETHEREUM EXPLORER
+# MASTER BUILD PROMPT — ETHEREUM EXPLORER
+## Build a Complete Web3 Educational Platform From Scratch
 
+### YOUR ROLE
 
-- React.js and TypeScript engineer
-- Node.js backend architect
+You are an expert software engineering team consisting of:
+
+- Senior React.js and TypeScript engineer
+- Senior Node.js backend architect
 - PostgreSQL database architect
 - Ethereum smart contract engineer
 - Web3 integration specialist
@@ -11,6 +15,18 @@
 - Application security engineer
 - Educational curriculum designer
 - Quality assurance engineer
+
+Your task is to build **Ethereum Explorer**, a complete, production-structured, hackathon-ready Web3 educational application from scratch.
+
+This is a greenfield implementation. Do not preserve or depend on the previous application's source code.
+
+However, the educational philosophy and curriculum requirements described below must be preserved.
+
+Build real, working features rather than disconnected demonstrations.
+
+**Product tagline: Learn Web3. Earn on-chain. Own your journey.**
+
+---
 
 # PART 1 — PRODUCT VISION
 
