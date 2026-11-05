@@ -1,0 +1,23 @@
+{
+  "name": "@ethereum-explorer/blockchain-indexer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "dev": "node --watch --experimental-strip-types src/index.ts",
+    "build": "esbuild src/index.ts --bundle --platform=node --target=node22 --format=esm --outfile=dist/index.js",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ethereum-explorer/blockchain": "0.1.0",
+    "@ethereum-explorer/database": "0.1.0",
+    "@ethereum-explorer/shared": "0.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "esbuild": "^0.25.10",
+    "typescript": "~5.9.2"
+  }
+}
