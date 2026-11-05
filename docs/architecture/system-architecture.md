@@ -6,8 +6,7 @@ Fargate behind an ALB. PostgreSQL on RDS stores accounts, curriculum
 progress, assessments, identity links, reward entitlements, workflow
 executions, and audit records.
 
-The reward path is:
-
+The reward path is: 
 1. A verified student completes practice and the single-attempt challenge.
 2. The API creates one database-constrained reward entitlement.
 3. The student links and proves ownership of a wallet.

@@ -7,7 +7,6 @@ npm run typecheck
 npm run build
 npm test
 ```
-
 Run the Foundry suite after installing OpenZeppelin and forge-std:
 
 ```sh
