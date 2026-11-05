@@ -1,0 +1,27 @@
+# Build outputs — regenerated inside the container
+dist/
+dist-server/
+
+# Dependencies — reinstalled by npm ci inside the container
+node_modules/
+
+# Local environment files — credentials must NEVER go into the image
+.env
+.env.*
+!.env.example
+
+# Development and tooling artefacts
+.git/
+.gitignore
+.npm-cache/
+.qa/
+coverage/
+*.tsbuildinfo
+.vite/
+
+# Documentation (not needed at runtime)
+docs/
+
+# Editor and OS noise
+.DS_Store
+*.log
