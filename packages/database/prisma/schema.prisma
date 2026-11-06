@@ -1,0 +1,299 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum LearningMode {
+  DEVELOPER
+  EXPLORER
+}
+enum ChapterStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  PRACTICE_COMPLETED
+  MASTER_UNLOCKED
+  MASTER_PASSED
+  MASTER_FAILED
+  REWARD_ELIGIBLE
+  REWARD_CLAIMED
+}
+enum RewardClaimStatus {
+  PENDING
+  CRE_SUBMITTED
+  CRE_COMPLETED
+  MINTING
+  CONFIRMED
+  FAILED
+  EXPIRED
+}
+enum WorkflowStatus {
+  INITIATED
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model Student {
+  id                 String   @id @default(uuid())
+  username           String   @unique
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  sessions           StudentSession[]
+  verification      HumanVerification?
+  wallets            LinkedWallet[]
+  ensIdentity        EnsIdentity?
+  practiceAttempts   PracticeAttempt[]
+  masterAttempts     MasterAttempt[]
+  chapterProgress    ChapterProgress[]
+  rewardEligibilities RewardEligibility[]
+  rewardClaims       RewardClaim[]
+  achievements       StudentAchievement[]
+  auditLogs          AuditLog[]
+}
+
+model StudentSession {
+  id        String   @id @default(uuid())
+  studentId String
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  @@index([studentId, expiresAt])
+}
+
+model HumanVerification {
+  id             String   @id @default(uuid())
+  studentId      String   @unique
+  nullifierHash  String   @unique
+  credential     String
+  verifiedAt     DateTime @default(now())
+  student        Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model LinkedWallet {
+  id         String   @id @default(uuid())
+  studentId  String
+  address    String
+  isPrimary  Boolean  @default(false)
+  linkedAt   DateTime @default(now())
+  student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  @@unique([studentId, address])
+  @@index([address])
+}
+
+model EnsIdentity {
+  id           String   @id @default(uuid())
+  studentId    String   @unique
+  subname      String   @unique
+  fullName     String   @unique
+  ownerAddress String
+  registeredAt DateTime @default(now())
+  student      Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model LearningModeDefinition {
+  id       String       @id @default(uuid())
+  mode     LearningMode @unique
+  title    String
+  paths    LearningPath[]
+}
+
+model LearningPath {
+  id       String   @id @default(uuid())
+  modeId   String
+  slug     String   @unique
+  title    String
+  mode     LearningModeDefinition @relation(fields: [modeId], references: [id], onDelete: Cascade)
+  worlds   CurriculumWorld[]
+}
+
+model CurriculumWorld {
+  id       String   @id @default(uuid())
+  pathId   String
+  slug     String
+  title    String
+  sortOrder Int
+  path     LearningPath @relation(fields: [pathId], references: [id], onDelete: Cascade)
+  chapters Chapter[]
+  @@unique([pathId, slug])
+}
+
+model Chapter {
+  id          String   @id @default(uuid())
+  worldId     String
+  slug        String   @unique
+  title       String
+  description String
+  sortOrder   Int
+  world       CurriculumWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+  stages      LessonStage[]
+  questions   PracticeQuestion[]
+  master      MasterChallenge?
+  progress    ChapterProgress[]
+  eligibility RewardEligibility[]
+  claims      RewardClaim[]
+}
+
+model LessonStage {
+  id        String @id @default(uuid())
+  chapterId String
+  stage     Int
+  title     String
+  content   Json
+  chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  @@unique([chapterId, stage])
+}
+
+model PracticeQuestion {
+  id        String @id @default(uuid())
+  chapterId String
+  prompt    String
+  options   Json
+  answer    Int
+  explanation String
+  chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  attempts  PracticeAttempt[]
+}
+
+model PracticeAttempt {
+  id           String   @id @default(uuid())
+  studentId    String
+  questionId   String
+  mode         LearningMode
+  selectedOption Int
+  correct      Boolean
+  attemptedAt  DateTime @default(now())
+  student      Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  question     PracticeQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  @@index([studentId, questionId])
+}
+
+model MasterChallenge {
+  id        String @id @default(uuid())
+  chapterId String @unique
+  prompt    String
+  options   Json
+  answer    Int
+  explanation String
+  chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  attempts  MasterAttempt[]
+}
+
+model MasterAttempt {
+  id             String   @id @default(uuid())
+  studentId      String
+  challengeId    String
+  mode           LearningMode
+  selectedOption Int
+  correct        Boolean
+  rewardEligible Boolean
+  idempotencyKey String
+  submittedAt    DateTime @default(now())
+  student        Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  challenge      MasterChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  @@unique([studentId, challengeId])
+  @@unique([studentId, idempotencyKey])
+}
+
+model ChapterProgress {
+  id           String        @id @default(uuid())
+  studentId    String
+  chapterId    String
+  status       ChapterStatus @default(NOT_STARTED)
+  practiceDone Boolean       @default(false)
+  updatedAt    DateTime      @updatedAt
+  student      Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  chapter      Chapter       @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  @@unique([studentId, chapterId])
+}
+
+model RewardEligibility {
+  id            String   @id @default(uuid())
+  studentId     String
+  chapterId     String
+  tokenAmount   Decimal  @db.Decimal(36, 18)
+  commitment    String
+  createdAt     DateTime @default(now())
+  student       Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  chapter       Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  claim         RewardClaim?
+  @@unique([studentId, chapterId])
+}
+
+model RewardClaim {
+  id            String            @id @default(uuid())
+  studentId     String
+  chapterId     String
+  eligibilityId String            @unique
+  walletAddress String
+  tokenAmount   Decimal           @db.Decimal(36, 18)
+  status        RewardClaimStatus @default(PENDING)
+  txHash        String?           @unique
+  blockNumber   BigInt?
+  createdAt     DateTime          @default(now())
+  claimedAt     DateTime?
+  student       Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  chapter       Chapter           @relation(fields: [chapterId], references: [id], onDelete: Restrict)
+  eligibility   RewardEligibility @relation(fields: [eligibilityId], references: [id], onDelete: Restrict)
+  transactions  BlockchainTransaction[]
+  workflows     WorkflowExecution[]
+  @@unique([studentId, chapterId])
+}
+
+model BlockchainTransaction {
+  id        String   @id @default(uuid())
+  claimId   String
+  txHash    String   @unique
+  chainId   Int
+  status    String
+  blockNumber BigInt?
+  createdAt DateTime @default(now())
+  claim     RewardClaim @relation(fields: [claimId], references: [id], onDelete: Cascade)
+}
+
+model AchievementDefinition {
+  id          String @id
+  name        String
+  description String
+  requirement String
+  icon        String
+  color       String
+  students    StudentAchievement[]
+}
+
+model StudentAchievement {
+  studentId    String
+  achievementId String
+  earnedAt     DateTime @default(now())
+  student      Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  achievement  AchievementDefinition @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  @@id([studentId, achievementId])
+}
+
+model WorkflowExecution {
+  id         String         @id @default(uuid())
+  claimId    String
+  workflowId String
+  status     WorkflowStatus @default(INITIATED)
+  reportHash String?
+  error      String?
+  startedAt  DateTime       @default(now())
+  completedAt DateTime?
+  claim      RewardClaim    @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  @@index([claimId, status])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  studentId String?
+  action    String
+  resource  String
+  metadata  Json?
+  createdAt DateTime @default(now())
+  student   Student? @relation(fields: [studentId], references: [id], onDelete: SetNull)
+  @@index([studentId, createdAt])
+}
